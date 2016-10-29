@@ -23,7 +23,7 @@ def sound_play( location, fileName ):
       port = '6103' # just do top while you are here
       sound_play( location='left',  fileName=fileName )
       sound_play( location='right',  fileName=fileName )
-   link = 'http://127.0.0.1:'+port+'/requests/status.xml?command=in_play&input=C:\halloween2016\Sound_Effects\\'+fileName
+   link = 'http://127.0.0.1:'+port+'/requests/status.xml?command=in_play&input=C:\halloween2016\CODE\Sound_Effects\\'+fileName
    requests.get(link, auth=HTTPBasicAuth('', 'meatball'))
    return;
  
@@ -64,6 +64,7 @@ class ExampleApp(tk.Frame):
             app.update()
             if(stage == -2):
                 ser.write('1,1,') # LightBulb On Full Power
+                stage = -3
             ############      MAIN SEQUENCE      ############
             if(time.clock()-lastTime >  2 and stage == 0 ):
                 stage+=1; lastTime = time.clock();
@@ -81,6 +82,7 @@ class ExampleApp(tk.Frame):
             if(time.clock()-lastTime > 1 and stage == 3 ):
                 stage+=1; lastTime = time.clock();
                 ser.write('1,0,') # LightBulb OFF
+                ser.write('7,1,') # BlackLight ON
                 sound_play( location='left', fileName='l_Mcalay.wav' ) # SOUND                
                 
             if(time.clock()-lastTime > 2 and stage == 4 ):
@@ -92,6 +94,7 @@ class ExampleApp(tk.Frame):
                 ser.write('4,1,') # REDLED Casket lights ON
                 sound_play( location='right', fileName='l_thud.wav' ) # SOUND
                 sound_play( location='front', fileName='l_thud.wav' ) # SOUND
+                ser.write('7,0,') # BlackLight ON
                 
             if(time.clock()-lastTime > 2 and stage == 6 ):
                 stage+=1; lastTime = time.clock();
@@ -114,7 +117,7 @@ class ExampleApp(tk.Frame):
                 
             inches = ser.readline()
             inchesNUM = int(inches)
-            #print("inches: "+inches)
+            print("inches: "+inches)
         
 
         
@@ -135,9 +138,9 @@ class ExampleApp(tk.Frame):
         sys.exit()
         exit();
     def tarp_up(self):
-        ser.close()
+        ser.write('6,2,') # Bring Tarp UPP
     def tarp_down(self):
-        ser.close()
+        ser.write('6,1,') # Bring Tarp DOWNN
     def idleRoom(self):
         global stage
         stage = -2;
