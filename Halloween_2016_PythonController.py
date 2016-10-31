@@ -4,8 +4,22 @@ from Tkinter import *
 import requests
 import serial
 import time
+import sys
 ser = serial.Serial('COM28', 9600)
 
+
+
+   
+def scary_frame(  fileName ):
+      port = '6200'
+      link = 'http://192.168.1.13:'+port+'/requests/status.xml?command=in_play&input=C:\lvids\\'+fileName
+      requests.get(link, auth=HTTPBasicAuth('', 'meatball'))
+      return;
+def scary_frame_freeze( ):
+      port = '6200'
+      link = 'http://192.168.1.13:'+port+'/requests/status.xml?command=pl_pause'
+      requests.get(link, auth=HTTPBasicAuth('', 'meatball'))
+      
 
 def sound_play( location, fileName ):
    "This plays a sound out of a certain speaker"
@@ -26,13 +40,16 @@ def sound_play( location, fileName ):
    link = 'http://127.0.0.1:'+port+'/requests/status.xml?command=in_play&input=C:\halloween2016\CODE\Sound_Effects\\'+fileName
    requests.get(link, auth=HTTPBasicAuth('', 'meatball'))
    return;
+
+
+
  
 class ExampleApp(tk.Frame):
     ''' An example application for TkInter.  Instantiate
         and call the run method to run. '''
     def __init__(self, master):
         # Initialize window using the parent's constructor
-        tk.Frame.__init__(self,master,width=300,height=200)
+        tk.Frame.__init__(self,master,width=360,height=260)
         # Set the title
         self.master.title('Halloween Controller')
         # This allows the size specification to take effect
@@ -54,16 +71,40 @@ class ExampleApp(tk.Frame):
         self.SoundTest_button.pack(fill=tk.X, side=tk.TOP)
         self.idle_button = tk.Button(self,text='Room Idle',command=self.idleRoom)
         self.idle_button.pack(fill=tk.X, side=tk.LEFT)
+        self.fogON_button = tk.Button(self,text='FOG ON',command=self.FOG_on)
+        self.fogON_button.pack(fill=tk.X, side=tk.RIGHT)
+        self.fogOFF_button = tk.Button(self,text='FOG OFF',command=self.FOG_off)
+        self.fogOFF_button.pack(fill=tk.X, side=tk.RIGHT)        
+        master.protocol("WM_DELETE_WINDOW", self.SerialClose)
               
     def run(self):
         ''' Run the app '''
         global stage
         global lastTime
-        stage = -1; lastTime = time.clock();
+        stage = -1; lastTime = time.clock(); lastPictureTime = time.clock();
         while(1):
+           
             app.update()
+                
+            inches = ser.readline()
+            inchesNUM = int(inches)
+            #print("inches: "+inches)
+            
+            if(stage == -4 and time.clock()-lastPictureTime >  10):
+               #scary_frame_freeze();
+               stage = -5;
+            
+            if(stage == -3):
+               if(inchesNUM < 30):
+                  #scary_frame('l2.mp4')
+                  lastPictureTime = time.clock();
+                  stage = -4
+
+                
             if(stage == -2):
                 ser.write('1,1,') # LightBulb On Full Power
+                ser.write('10,1,') # Main LED lights ON
+                sound_play( location='other', fileName='l_comeHere.wav' ) # SOUND
                 stage = -3
             ############      MAIN SEQUENCE      ############
             if(time.clock()-lastTime >  2 and stage == 0 ):
@@ -78,6 +119,7 @@ class ExampleApp(tk.Frame):
             if(time.clock()-lastTime > 3.5 and stage == 2 ):
                 stage+=1; lastTime = time.clock();
                 ser.write('1,1,') # LightBulb On Full Power
+                ser.write('10,0,') # Main LED lights OFF
                 
             if(time.clock()-lastTime > 1 and stage == 3 ):
                 stage+=1; lastTime = time.clock();
@@ -85,39 +127,73 @@ class ExampleApp(tk.Frame):
                 ser.write('7,1,') # BlackLight ON
                 sound_play( location='left', fileName='l_Mcalay.wav' ) # SOUND                
                 
-            if(time.clock()-lastTime > 2 and stage == 4 ):
+            if(time.clock()-lastTime > 4 and stage == 4 ):
                 stage+=1; lastTime = time.clock();
                 ser.write('5,1,') # Creepy LEtters on, takes 10-13 seconds to complete
+            if(time.clock()-lastTime > 4 and stage == 5 ):
+                stage+=1; lastTime = time.clock();
+                sound_play( location='right', fileName='l_olvDeep.wav' ) # SOUND 
                 
-            if(time.clock()-lastTime > 16 and stage == 5 ):
+                
+            if(time.clock()-lastTime > 16 and stage == 6 ):
                 stage+=1; lastTime = time.clock();
                 ser.write('4,1,') # REDLED Casket lights ON
                 sound_play( location='right', fileName='l_thud.wav' ) # SOUND
                 sound_play( location='front', fileName='l_thud.wav' ) # SOUND
-                ser.write('7,0,') # BlackLight ON
+                ser.write('7,0,') # BlackLight OFF
                 
-            if(time.clock()-lastTime > 2 and stage == 6 ):
+            if(time.clock()-lastTime > 2 and stage == 7 ):
                 stage+=1; lastTime = time.clock();
                 ser.write('3,1,') # Casket START
+                ser.write('6,1,') # Bring Tarp DOWNN
                 sound_play( location='right', fileName='l_MixSet_A.wav' ) # SOUND
                 sound_play( location='front', fileName='l_MixSet_A.wav' ) # SOUND
                 
-            if(time.clock()-lastTime > 1 and stage == 7 ):
+            if(time.clock()-lastTime > 1 and stage == 8 ):
                 stage+=1; lastTime = time.clock();
                 ser.write('3,2,') # Casket START
                 sound_play( location='right', fileName='l_zomie_long.mp3' ) # SOUND
                 
-            if(time.clock()-lastTime > 3 and stage == 8 ):
+            if(time.clock()-lastTime > 3 and stage == 9 ):
                 stage+=1; lastTime = time.clock();
                 ser.write('3,0,') # Casket END
                 ser.write('4,0,') # REDLED Casket lights OFF
+                ser.write('7,1,') # BlackLight ON
+            if(time.clock()-lastTime > 2 and stage == 10 ):
+                stage+=1; lastTime = time.clock();
+                ser.write('2,1,') # LightBulb SHAKY
+                ser.write('1,2,') # LightBulb Flicker
+                sound_play( location='top', fileName='l_MyFlickerSound.mp3' ) # SOUND
+            if(time.clock()-lastTime > 3.5 and stage == 11 ):
+                stage+=1; lastTime = time.clock();
+                ser.write('1,0,') # LightBulb OFF
+                ser.write('9,1,') # Spookies lights On
+                ser.write('11,1,') # Spookies eyes On
+                ser.write('7,0,') # BlackLight OFF
+                sound_play( location='front', fileName='l_ZOMMOAN2.WAV' ) # SOUND
+            if(time.clock()-lastTime > 3.5 and stage == 12 ):
+                stage+=1; lastTime = time.clock();
+                ser.write('3,1,') # Casket START
+                sound_play( location='main', fileName='l_thud.wav' ) # SOUND
+                #sound_play( location='front', fileName='l_thud.wav' ) # SOUND
+                sound_play( location='right', fileName='l_highPitch.mp3' ) # SOUND
+                sound_play( location='front', fileName='l_ShatnerFade.mp3' ) # SOUND
                 
-
+                ser.write('5,1,') # Creepy LEtters on, takes 10-13 seconds to complete
+                
+            if(time.clock()-lastTime > 4 and stage == 13 ):
+                stage+=1; lastTime = time.clock();
+                ser.write('3,0,') # Casket END
+            if(time.clock()-lastTime > 20 and stage == 14 ):
+                stage=-2; lastTime = time.clock();
+                ser.write('9,0,') # Spookies lights OFF
+                ser.write('11,0,') # Spookies Eyes OFF
+                ser.write('6,2,') # Bring Tarp UP                   
 
                 
-            inches = ser.readline()
-            inchesNUM = int(inches)
-            print("inches: "+inches)
+                
+                
+               
         
 
         
@@ -134,13 +210,17 @@ class ExampleApp(tk.Frame):
         
     def SerialClose(self):
         ser.close()
-        import sys
-        sys.exit()
-        exit();
+        exit()
+
     def tarp_up(self):
         ser.write('6,2,') # Bring Tarp UPP
     def tarp_down(self):
         ser.write('6,1,') # Bring Tarp DOWNN
+    def FOG_on(self):
+        ser.write('8,1,') # fog on
+    def FOG_off(self):
+        ser.write('8,0,') # fog off
+        
     def idleRoom(self):
         global stage
         stage = -2;
